@@ -15,4 +15,24 @@ async function insert(client, { accountId, type, amount, description, referenceI
     return rows[0];
 }
 
-module.exports = { findByReference, insert };
+async function countByAccount(client, accountId, type) {
+    const { rows } = await client.query(
+        `SELECT COUNT(*)::int AS total FROM transactions
+     WHERE account_id = $1 AND ($2::text IS NULL OR type = $2)`,
+        [accountId, type ?? null]
+    );
+    return rows[0].total;
+}
+
+async function listByAccount(client, accountId, type, limit, offset) {
+    const { rows } = await client.query(
+        `SELECT * FROM transactions
+     WHERE account_id = $1 AND ($2::text IS NULL OR type = $2)
+     ORDER BY created_at DESC, id DESC
+     LIMIT $3 OFFSET $4`,
+        [accountId, type ?? null, limit, offset]
+    );
+    return rows;
+}
+
+module.exports = { findByReference, insert, countByAccount, listByAccount };

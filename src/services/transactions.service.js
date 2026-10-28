@@ -39,4 +39,25 @@ async function addTransaction(accountId, { type, amount, description, reference_
     });
 }
 
-module.exports = { addTransaction };
+const { pool } = require('../config/db');
+
+async function getHistory(accountId, { type, page, limit }) {
+    const account = await accountsRepo.findById(pool, accountId);
+    if (!account) throw new AppError(404, 'ACCOUNT_NOT_FOUND', 'Account not found');
+
+    const total = await txnRepo.countByAccount(pool, accountId, type);
+    const offset = (page - 1) * limit;
+    const data = await txnRepo.listByAccount(pool, accountId, type, limit, offset);
+
+    return {
+        data,
+        pagination: {
+            current_page: page,
+            page_size: limit,
+            total_records: total,
+            total_pages: Math.ceil(total / limit),
+        },
+    };
+}
+
+module.exports = { addTransaction, getHistory };

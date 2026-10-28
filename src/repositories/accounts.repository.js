@@ -41,4 +41,26 @@ async function debit(client, id, amount) {
     return rows[0] ? rows[0].balance : null; // null = insufficient
 }
 
-module.exports = {create, findByIdForUpdate, credit, debit};
+async function findById(client, id) {
+    const {rows} = await client.query(
+        `SELECT id, name, balance, created_at
+         FROM accounts
+         WHERE id = $1`,
+        [id]
+    );
+    return rows[0] || null;
+}
+
+// Transfer ke liye: dono accounts ko ID ke order mein lock karo (deadlock se bachne ke liye)
+async function lockManyOrdered(client, ids) {
+    const {rows} = await client.query(
+        `SELECT id, balance
+         FROM accounts
+         WHERE id = ANY ($1::uuid[])
+         ORDER BY id FOR UPDATE`,
+        [ids]
+    );
+    return rows;
+}
+
+module.exports = {create, findById, findByIdForUpdate, lockManyOrdered, credit, debit};

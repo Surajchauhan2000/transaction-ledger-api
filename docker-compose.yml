@@ -8,3 +8,18 @@ services:
     ports: ["5432:5432"]
     volumes:
       - ./migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h localhost -U ledger -d ledger"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  app:
+    build: .
+    ports: ["3000:3000"]
+    environment:
+      DATABASE_URL: postgres://ledger:ledger@db:5432/ledger
+      PORT: 3000
+    depends_on:
+      db:
+        condition: service_healthy

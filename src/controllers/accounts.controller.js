@@ -18,4 +18,16 @@ async function addTransaction(req, res, next) {
     } catch (e) { next(e); }
 }
 
-module.exports = { createAccount, addTransaction };
+async function getBalance(req, res, next) {
+    try {
+        res.json(await accountsService.getBalance(req.validated.params.id));
+    } catch (e) { next(e); }
+}
+
+async function getHistory(req, res, next) {
+    try {
+        res.json(await txnService.getHistory(req.validated.params.id, req.validated.query));
+    } catch (e) { next(e); }
+}
+
+module.exports = { createAccount, addTransaction, getBalance, getHistory };
